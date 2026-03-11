@@ -67,6 +67,7 @@ static __always_inline int poll_cq_adaptive(
 	struct dyn_poll_state *state,
 	int *dynamic_enabled)
 {
+	printf("[ibv_poll_cq #11] perftest_resources.c: polling cq, state->curr_size (poll_cq_dynamic)\n");
 	int ne = ibv_poll_cq(cq, state->curr_size, wc);
 
 	if (ne == state->curr_size && state->curr_size < config->max) {
@@ -104,6 +105,8 @@ static __always_inline int poll_completions(
 			dynamic_enabled
 		);
 	}
+	// printf("[ibv_poll_cq #12] perftest_resources.c: polling cq, dyn_ctx->state.curr_size (poll_cq_dynamic_ctx)\n");
+	// printf("Current size: %u\n", dyn_ctx->state.curr_size);
 	return ibv_poll_cq(cq, dyn_ctx->state.curr_size, wc);
 }
 
@@ -1809,6 +1812,7 @@ static int is_sig_offload_supported(struct ibv_context *ibv_ctx)
 	};
 
 	if (mlx5dv_query_device(ibv_ctx, &ctx)) {
+		printf("Case 2 of failure \n"); 
 		fprintf(stderr, "Failed to query device capabilities\n");
 		return 0;
 	}
@@ -2487,6 +2491,7 @@ void check_bf_support(struct pingpong_context *ctx)
 
 	ret = mlx5dv_query_device(ctx->context, &ctx_dv);
 	if (ret) {
+		printf("Case 3 of failure \n");
 		fprintf(stderr, "Failed to query device capabilities, ret=%d\n", ret);
 		return;
 	}
@@ -3079,6 +3084,7 @@ struct ibv_qp* ctx_qp_create(struct pingpong_context *ctx,
 				int ret = mlx5dv_query_device(ctx->context, &ctx_dv);
 
 				if (ret) {
+					printf("Case 4 of failure \n");
 					fprintf(stderr, "Failed to query device capabilities, ret=%d\n", ret);
 					return NULL;
 				}
@@ -4171,6 +4177,7 @@ static int clean_scq_credit(int send_cnt,struct pingpong_context *ctx,struct per
 
 	ALLOCATE(swc,struct ibv_wc,user_param->tx_depth);
 	do {
+		printf("[ibv_poll_cq #13] perftest_resources.c: polling ctx->send_cq, tx_depth, swc (cleanup_send_cq_1)\n");
 		sne = ibv_poll_cq(ctx->send_cq,user_param->tx_depth,swc);
 		if (sne > 0) {
 			for (i = 0; i < sne; i++) {
@@ -4220,6 +4227,7 @@ int perform_warm_up(struct pingpong_context *ctx,struct perftest_parameters *use
 #endif
 
 	/* Clean up the pipe */
+	printf("[ibv_poll_cq #14] perftest_resources.c: polling ctx->send_cq, tx_depth, wc_for_cleaning (pipe_cleanup)\n");
 	ne = ibv_poll_cq(ctx->send_cq,user_param->tx_depth,wc_for_cleaning);
 
 	for (qp_index=0 ; qp_index < num_of_qps ; qp_index++) {
@@ -4246,6 +4254,7 @@ int perform_warm_up(struct pingpong_context *ctx,struct perftest_parameters *use
 
 		do {
 
+			printf("[ibv_poll_cq #15] perftest_resources.c: polling ctx->send_cq, 1 (wait_send_cq)\n");
 			ne = ibv_poll_cq(ctx->send_cq,1,&wc);
 			if (ne > 0) {
 
@@ -4467,7 +4476,7 @@ int run_iter_bw(struct pingpong_context *ctx,struct perftest_parameters *user_pa
 				}
 
 				/* Dynamic CQE poll size adaptation */
-				ne = poll_completions(
+					ne = poll_completions(
 					ctx->send_cq,
 					wc,
 					dyn_ctx,
@@ -4990,6 +4999,7 @@ int run_iter_bw_server(struct pingpong_context *ctx, struct perftest_parameters 
 							ctx->ctrl_buf[qp_index] = rcnt_for_qp[qp_index];
 
 							while (scredit_for_qp[qp_index] == user_param->tx_depth) {
+								printf("[ibv_poll_cq #16] perftest_resources.c: polling ctx->send_cq, tx_depth, swc (credit_wait_1)\n");
 								sne = ibv_poll_cq(ctx->send_cq,user_param->tx_depth,swc);
 								if (sne > 0) {
 									for (j = 0; j < sne; j++) {
@@ -5298,8 +5308,7 @@ int run_iter_bw_infinitely_server(struct pingpong_context *ctx, struct perftest_
 	user_param->tposted[0] = get_cycles();
 
 	while (1) {
-
-		ne = poll_completions(
+			ne = poll_completions(
 			ctx->recv_cq,
 			wc,
 			dyn_ctx,
@@ -5372,6 +5381,7 @@ int run_iter_bw_infinitely_server(struct pingpong_context *ctx, struct perftest_
 						while (ccnt_for_qp[qp_index] == user_param->tx_depth) {
 							int sne, j = 0, swc_qp_index;
 
+							printf("[ibv_poll_cq #17] perftest_resources.c: polling ctx->send_cq, tx_depth, swc (credit_wait_2)\n");
 							sne = ibv_poll_cq(ctx->send_cq,user_param->tx_depth,swc);
 							if (sne > 0) {
 								for (j = 0; j < sne; j++) {
@@ -5569,6 +5579,7 @@ int run_iter_bi(struct pingpong_context *ctx,
 			}
 		}
 
+		printf("[ibv_poll_cq #18] perftest_resources.c: polling ctx->recv_cq, rx_depth (recv_bw_poll)\n");
 		recv_ne = ibv_poll_cq(ctx->recv_cq, user_param->rx_depth, wc);
 		if (recv_ne > 0) {
 
@@ -5652,6 +5663,7 @@ int run_iter_bi(struct pingpong_context *ctx,
 						ctx->ctrl_buf[qp_index] = rcnt_for_qp[qp_index];
 
 						while ((ctx->scnt[qp_index] + scredit_for_qp[qp_index]) >= (user_param->tx_depth + ctx->ccnt[qp_index])) {
+							printf("[ibv_poll_cq #19] perftest_resources.c: polling ctx->send_cq, 1, credit_wc (credit_wc_wait)\n");
 							sne = ibv_poll_cq(ctx->send_cq, 1, &credit_wc);
 							if (sne > 0) {
 								if (credit_wc.status != IBV_WC_SUCCESS) {
@@ -5709,6 +5721,7 @@ int run_iter_bi(struct pingpong_context *ctx,
 			}
 		}
 
+		printf("[ibv_poll_cq #20] perftest_resources.c: polling ctx->send_cq, cqe_poll (send_bw_poll)\n");
 		send_ne = ibv_poll_cq(ctx->send_cq, user_param->cqe_poll, wc_tx);
 
 		if (send_ne > 0) {
@@ -5866,7 +5879,10 @@ int run_iter_lat_write(struct pingpong_context *ctx,struct perftest_parameters *
 
 		if (ccnt < user_param->iters || user_param->test_type == DURATION) {
 
-			do { ne = ibv_poll_cq(ctx->send_cq, 1, &wc); } while (ne == 0 && !(user_param->test_type == DURATION && user_param->state == END_STATE));
+			do {
+			// printf("[ibv_poll_cq #21] perftest_resources.c: polling ctx->send_cq (send_bw_loop)\n");
+			ne = ibv_poll_cq(ctx->send_cq, 1, &wc);
+		} while (ne == 0 && !(user_param->test_type == DURATION && user_param->state == END_STATE));
 
 			if(ne > 0) {
 
@@ -5949,7 +5965,10 @@ int run_iter_lat_write_imm(struct pingpong_context *ctx,struct perftest_paramete
 			}
 
 			/* Poll for a completion */
-			do { ne = ibv_poll_cq(ctx->recv_cq, 1, &wc); } while (!user_param->use_event && ne == 0 && !(user_param->test_type == DURATION && user_param->state == END_STATE));
+			do {
+			printf("[ibv_poll_cq #22] perftest_resources.c: polling ctx->recv_cq (recv_bw_loop)\n");
+			ne = ibv_poll_cq(ctx->recv_cq, 1, &wc);
+		} while (!user_param->use_event && ne == 0 && !(user_param->test_type == DURATION && user_param->state == END_STATE));
 			if (ne > 0) {
 				if (wc.status != IBV_WC_SUCCESS) {
 					//coverity[uninit_use_in_call]
@@ -6021,7 +6040,10 @@ int run_iter_lat_write_imm(struct pingpong_context *ctx,struct perftest_paramete
 				}
 			}
 
-			do { ne = ibv_poll_cq(ctx->send_cq, 1, &wc); } while (ne == 0);
+			do {
+			printf("[ibv_poll_cq #23] perftest_resources.c: polling ctx->send_cq (send_lat_loop)\n");
+			ne = ibv_poll_cq(ctx->send_cq, 1, &wc);
+		} while (ne == 0);
 
 			if(ne > 0) {
 
@@ -6105,6 +6127,7 @@ int run_iter_lat(struct pingpong_context *ctx,struct perftest_parameters *user_p
 		}
 
 		do {
+			printf("[ibv_poll_cq #24] perftest_resources.c: polling ctx->send_cq, 1 (send_lat_inner)\n");
 			ne = ibv_poll_cq(ctx->send_cq, 1, &wc);
 			if(ne > 0) {
 				if (wc.status != IBV_WC_SUCCESS) {
@@ -6183,6 +6206,7 @@ int run_iter_lat_send(struct pingpong_context *ctx,struct perftest_parameters *u
 				}
 			}
 			do {
+				printf("[ibv_poll_cq #25] perftest_resources.c: polling ctx->recv_cq, 1 (recv_lat_inner)\n");
 				ne = ibv_poll_cq(ctx->recv_cq,1,&wc);
 				if (user_param->test_type == DURATION && user_param->state == END_STATE)
 					break;
@@ -6296,6 +6320,7 @@ int run_iter_lat_send(struct pingpong_context *ctx,struct perftest_parameters *u
 
 				/* wait until you get a cq for the last packet */
 				do {
+					printf("[ibv_poll_cq #26] perftest_resources.c: polling ctx->send_cq, 1, s_wc (last_packet_wait)\n");
 					s_ne = ibv_poll_cq(ctx->send_cq, 1, &s_wc);
 				} while (!user_param->use_event && s_ne == 0);
 
@@ -6348,6 +6373,7 @@ int run_iter_lat_burst_server(struct pingpong_context *ctx, struct perftest_para
 	/* main loop for polling */
 	while (rcnt < user_param->iters) {
 
+		printf("[ibv_poll_cq #27] perftest_resources.c: polling ctx->recv_cq, burst_size (burst_recv_poll)\n");
 		ne = ibv_poll_cq(ctx->recv_cq, user_param->burst_size, wc);
 		if (ne > 0) {
 			for (i = 0; i < ne; i++) {
@@ -6386,6 +6412,7 @@ int run_iter_lat_burst_server(struct pingpong_context *ctx, struct perftest_para
 			free(wc);
 			return FAILURE;
 		}
+		printf("[ibv_poll_cq #28] perftest_resources.c: polling ctx->send_cq, CTX_POLL_BATCH (burst_send_poll)\n");
 		ne = ibv_poll_cq(ctx->send_cq, CTX_POLL_BATCH, wc);
 		if (ne > 0) {
 			for (i = 0; i < ne; i++) {
@@ -6516,6 +6543,7 @@ int run_iter_lat_burst(struct pingpong_context *ctx, struct perftest_parameters 
 		}
 polling:
 		do {
+			printf("[ibv_poll_cq #29] perftest_resources.c: polling ctx->recv_cq, CTX_POLL_BATCH (burst_recv_poll_2)\n");
 			ne = ibv_poll_cq(ctx->recv_cq, CTX_POLL_BATCH, wc);
 			if (ne > 0) {
 				for (i = 0; i < ne; i++) {
@@ -6545,6 +6573,7 @@ polling:
 				return_value = 1;
 				goto cleaning;
 			}
+			printf("[ibv_poll_cq #30] perftest_resources.c: polling ctx->send_cq, burst_size (burst_send_poll_2)\n");
 			ns = ibv_poll_cq(ctx->send_cq, user_param->burst_size, wc);
 			if (ns > 0) {
 				for (i = 0; i < ns; i++) {

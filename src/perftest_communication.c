@@ -241,6 +241,7 @@ static int send_qp_num_for_ah(struct pingpong_context *ctx,
 	}
 
 	do {
+		printf("[ibv_poll_cq #1] perftest_communication.c: polling ctx->send_cq (post_one_read_req)\n");
 		ne = ibv_poll_cq(ctx->send_cq, 1,&wc);
 	} while (ne == 0);
 
@@ -266,6 +267,7 @@ static int create_ah_from_wc_recv(struct pingpong_context *ctx,
 	int ne;
 
 	do {
+		printf("[ibv_poll_cq #2] perftest_communication.c: polling ctx->recv_cq (create_ah_recv)\n");
 		ne = ibv_poll_cq(ctx->recv_cq,1,&wc);
 	} while (ne == 0);
 
@@ -529,6 +531,7 @@ static int rdma_write_keys(struct pingpong_dest *my_dest,
 	}
 
 	do {
+		printf("[ibv_poll_cq #3] perftest_communication.c: polling comm->rdma_ctx->send_cq (rdma_write_keys)\n");
 		ne = ibv_poll_cq(comm->rdma_ctx->send_cq, 1,&wc);
 	} while (ne == 0);
 
@@ -554,6 +557,7 @@ static int rdma_read_keys(struct pingpong_dest *rem_dest,
 	int ne;
 
 	do {
+		printf("[ibv_poll_cq #4] perftest_communication.c: polling comm->rdma_ctx->recv_cq (rdma_read_keys)\n");
 		ne = ibv_poll_cq(comm->rdma_ctx->recv_cq,1,&wc);
 	} while (ne == 0);
 
@@ -1061,6 +1065,7 @@ int negotiate_params(struct pingpong_context *ctx,
 		#endif
 
 		if (mlx5dv_query_device(ctx->context, &ctx_dv)){
+			printf("Case 1 of failure \n"); 
 			fprintf(stderr, " Failed to query device capabilities\n");
 			return FAILURE;
 		}
@@ -1782,6 +1787,7 @@ int rdma_read_data(void *data,
 	int ne;
 
 	do {
+		printf("[ibv_poll_cq #5] perftest_communication.c: polling comm->rdma_ctx->recv_cq (rdma_read_data)\n");
 		ne = ibv_poll_cq(comm->rdma_ctx->recv_cq,1,&wc);
 	} while (ne == 0);
 
@@ -1831,6 +1837,7 @@ int rdma_write_data(void *data,
 	}
 
 	do {
+		printf("[ibv_poll_cq #6] perftest_communication.c: polling comm->rdma_ctx->send_cq (rdma_write_data)\n");
 		ne = ibv_poll_cq(comm->rdma_ctx->send_cq, 1,&wc);
 	} while (ne == 0);
 
@@ -2378,6 +2385,7 @@ int rdma_cm_initialize_ud_connection_parameters(struct pingpong_context *ctx,
 
 	connection_index = ctx->cma_master.connection_index;
 	do {
+		printf("[ibv_poll_cq #7] perftest_communication.c: polling ctx->recv_cq (cma_recv)\n");
 		cqes = ibv_poll_cq(ctx->recv_cq, 1, &wc);
 	} while (cqes == 0);
 
@@ -2459,6 +2467,7 @@ int rdma_cm_send_ud_connection_parameters(struct pingpong_context *ctx,
 	}
 
 	do {
+		printf("[ibv_poll_cq #8] perftest_communication.c: polling ctx->send_cq (cma_send)\n");
 		cqes = ibv_poll_cq(ctx->send_cq, 1, &wc);
 	} while (cqes == 0);
 

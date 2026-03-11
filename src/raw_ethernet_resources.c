@@ -1055,6 +1055,7 @@ int run_iter_fw(struct pingpong_context *ctx,struct perftest_parameters *user_pa
 
 		if ((user_param->test_type == ITERATIONS && (totrcnt < tot_iters)) ||
 			(user_param->test_type == DURATION && user_param->state != END_STATE)) {
+				printf("[ibv_poll_cq #9] raw_ethernet_resources.c: polling ctx->recv_cq (raw_ethernet_recv_loop)\n");
 				ne = ibv_poll_cq(ctx->recv_cq, CTX_POLL_BATCH, wc);
 
 			if (ne > 0) {
@@ -1084,6 +1085,7 @@ int run_iter_fw(struct pingpong_context *ctx,struct perftest_parameters *user_pa
 			}
 		}
 		if ((totccnt < tot_iters) || (user_param->test_type == DURATION && user_param->state != END_STATE)) {
+			printf("[ibv_poll_cq #10] raw_ethernet_resources.c: polling ctx->send_cq (raw_ethernet_send_loop)\n");
 			ne = ibv_poll_cq(ctx->send_cq, CTX_POLL_BATCH, wc_tx);
 			if (ne > 0) {
 				for (i = 0; i < ne; i++) {
