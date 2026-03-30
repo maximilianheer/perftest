@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# Define the path to your custom rdma-core build
-SCENIC_LIB_PATH="/home/hmaximili/cyt_rdma_driver/sw/rdma-core/build/lib"
+# Resolve path to the rdma-core submodule relative to this script's location
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCENIC_LIB_PATH="${SCRIPT_DIR}/../rdma-core/build/lib"
 
 # Export the paths so ib_write_bw finds your custom user-space provider
 export LD_LIBRARY_PATH="${SCENIC_LIB_PATH}:${LD_LIBRARY_PATH}"
